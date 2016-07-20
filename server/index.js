@@ -2,7 +2,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var session = require('express-session');
-var mongoose = require('mongoose');
+
 
 // CONFIG //
 var config = require('./config');
@@ -21,6 +21,8 @@ var isAuthed = function(req, res, next) {
 };
 
 
+
+
 // EXPRESS //
 var app = express();
 
@@ -36,29 +38,35 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Passport Endpoints
-app.post('/login', passport.authenticate('local', {
-  successRedirect: '/me'
-}));
-app.get('/logout', function(req, res, next) {
-  req.logout();
-  return res.status(200).send('logged out');
-});
 
-// User Endpoints
+
+// GOOGLE AUTHENTICATE ENDPOINTS //
+
+app.get('/auth/google',
+  passport.authenticate('google', { successRedirect: '/me',scope:
+      [ 'email', 'profile' ]
+     }));
+
+ 
+app.get( '/auth/google/callback', 
+    passport.authenticate( 'google', { 
+        successRedirect: '/me',
+        failureRedirect: '/login'
+}));
+
+// USER ENDPOINTS //
 app.post('/register', UserCtrl.register);
-app.get('/user', UserCtrl.read);
+app.get('/login', UserCtrl.read);
 app.get('/me', isAuthed, UserCtrl.me);
 app.put('/user/:_id', isAuthed, UserCtrl.update);
 
-// CONNECTIONS //
-var mongoURI = config.MONGO_URI;
-var port = config.PORT;
 
-mongoose.connect(mongoURI);
-mongoose.connection.once('open', function() {
-  console.log('Connected to Mongo DB at', mongoURI);
+// CONNECTIONS //
+
+ var port = config.PORT;
+
+
   app.listen(port, function() {
     console.log('Listening on port '+ port);
   });
-});
+

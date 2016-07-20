@@ -34,3 +34,5 @@ node_modules
 
 bundle.js
 style.css
+
+server/config.js
